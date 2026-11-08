@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search, Plus, FileText, CheckCircle2, Clock, DollarSign, FileCheck,
   Paperclip, Sun, Moon, X, Filter, AlertCircle, Phone, Trash2, Pencil,
-  Layers, User, Printer
+  Layers, User, Printer, Settings2
 } from 'lucide-react';
 
 import { supabase } from '../utils/supabase';
@@ -29,6 +29,17 @@ const corEtapa = (s: string) =>
       : 'bg-amber-500';
 
 const hoje = () => new Date().toLocaleDateString('pt-BR');
+
+const anoDoProcesso = (p: any) => {
+  if (p.ano) return String(p.ano);
+
+  // Compatibilidade com registros antigos que ainda não possuem o campo "ano".
+  const anoData = String(p.dataCriacao || '').match(/\/(\d{4})$/)?.[1];
+  if (anoData) return anoData;
+
+  const anoNumeroProcesso = String(p.processo || '').match(/\/(\d{4})-/)?.[1];
+  return anoNumeroProcesso || String(new Date().getFullYear());
+};
 
 const brl = (v: number | string) =>
   new Intl.NumberFormat('pt-BR', {
@@ -228,6 +239,8 @@ export default function App() {
 
   // BANCO DE DADOS
   const [processos, setProcessos] = useState<any[]>([]);
+  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()));
+  const [showYearSelector, setShowYearSelector] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dadosCarregados, setDadosCarregados] = useState(false);
   const [erroBanco, setErroBanco] = useState('');
@@ -307,10 +320,19 @@ export default function App() {
         return;
       }
 
-      const lista = (data || []).map((item: any) => item.dados);
+      const lista = (data || []).map((item: any) => ({
+        ...item.dados,
+        ano: anoDoProcesso(item.dados)
+      }));
 
       setProcessos(lista);
-      setSelectedId(lista[0]?.id || null);
+      const anoAtual = String(new Date().getFullYear());
+      const anosDisponiveis = lista.map((p: any) => String(p.ano));
+      const anoInicial = anosDisponiveis.includes(anoAtual)
+        ? anoAtual
+        : (anosDisponiveis.sort((a: string, b: string) => Number(b) - Number(a))[0] || anoAtual);
+      setSelectedYear(anoInicial);
+      setSelectedId(lista.find((p: any) => String(p.ano) === anoInicial)?.id || null);
       idsAnteriores.current = lista.map((p: any) => p.id);
 
       setDadosCarregados(true);
@@ -401,26 +423,48 @@ export default function App() {
   const toggleStatus = (key: string) =>
     setStatusFilter((cur) => (cur === key ? 'TODOS' : key));
 
-  const selected = useMemo(
-    () => processos.find((p) => p.id === selectedId) || processos[0],
-    [processos, selectedId]
+  const anosDisponiveis = useMemo(() => {
+    const anos = [...new Set([
+      String(new Date().getFullYear()),
+      ...processos.map((p) => anoDoProcesso(p))
+    ])];
+    return anos.sort((a, b) => Number(b) - Number(a));
+  }, [processos]);
+
+  const processosAno = useMemo(
+    () => processos.filter((p) => anoDoProcesso(p) === selectedYear),
+    [processos, selectedYear]
   );
 
-  const totalBruto = processos.reduce(
+  const selecionarAno = (ano: string) => {
+    setSelectedYear(ano);
+    setSelectedId(processos.find((p) => anoDoProcesso(p) === ano)?.id || null);
+    setSearchTerm('');
+    setFilterClass('TODOS');
+    setStatusFilter('TODOS');
+    setShowYearSelector(false);
+  };
+
+  const selected = useMemo(
+    () => processosAno.find((p) => p.id === selectedId) || processosAno[0],
+    [processosAno, selectedId]
+  );
+
+  const totalBruto = processosAno.reduce(
     (a, p) => a + (Number(p.valorBruto) || 0),
     0
   );
 
-  const totalRet = processos.reduce(
+  const totalRet = processosAno.reduce(
     (a, p) => a + (Number(p.darfRetencao) || 0),
     0
   );
 
-  const concluidos = processos.filter(
+  const concluidos = processosAno.filter(
     (p) => p.statusGeral === 'CONCLUÍDO'
   ).length;
 
-  const semEmpenho = processos.filter((p) => !p.empenho).length;
+  const semEmpenho = processosAno.filter((p) => !p.empenho).length;
 
   const etapasOcorrencia = selected?.empenho
     ? ETAPAS_POS
@@ -573,7 +617,7 @@ export default function App() {
   const filtered = useMemo(() => {
     const t = searchTerm.toLowerCase();
 
-    return processos.filter(
+    return processosAno.filter(
       (p) =>
         [
           p.empenho || '',
@@ -586,7 +630,7 @@ export default function App() {
           p.classificacao === filterClass) &&
         STATUS_FILTROS[statusFilter].test(p)
     );
-  }, [processos, searchTerm, filterClass, statusFilter]);
+  }, [processosAno, searchTerm, filterClass, statusFilter]);
 
   const card = dark
     ? 'bg-[#1e293b] border-slate-700/60'
@@ -627,6 +671,7 @@ export default function App() {
     const obj = {
       ...novo,
       id,
+      ano: selectedYear,
       empenho: '',
       valorBruto: parseFloat(novo.valorBruto) || 0,
       darfRetencao: parseFloat(novo.darfRetencao) || 0,
@@ -846,7 +891,7 @@ export default function App() {
         </h1>
 
         <p className="text-xs text-slate-600 mb-4">
-          Gerado em: {hoje()} · Total de Processos: {filtered.length}
+          Gerado em: {hoje()} · Ano: {selectedYear} · Total de Processos: {filtered.length}
         </p>
 
         <table className="w-full border-collapse border border-slate-300 text-left text-xs">
@@ -900,6 +945,51 @@ export default function App() {
             </div>
 
             <div className="flex items-center gap-2">
+
+              <div className="relative shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowYearSelector((aberto) => !aberto)}
+                  aria-expanded={showYearSelector}
+                  aria-label={`Selecionar ano. Ano atual: ${selectedYear}`}
+                  title="Organizar processos por ano"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                    dark
+                      ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200'
+                      : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                  }`}
+                >
+                  <Settings2 className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Ano: {selectedYear}</span>
+                </button>
+
+                {showYearSelector && (
+                  <div className={`absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border p-3 shadow-xl ${
+                    dark ? 'bg-[#1e293b] border-slate-700' : 'bg-white border-slate-200'
+                  }`}>
+                    <label htmlFor="seletor-ano" className="block text-xs font-semibold mb-2 text-slate-400">
+                      Visualizar processos do ano
+                    </label>
+                    <select
+                      id="seletor-ano"
+                      value={selectedYear}
+                      onChange={(e) => selecionarAno(e.target.value)}
+                      className={`w-full p-2 rounded-lg border text-sm outline-none focus:border-blue-500 ${
+                        dark
+                          ? 'bg-slate-800 border-slate-700 text-slate-100'
+                          : 'bg-slate-50 border-slate-200 text-slate-800'
+                      }`}
+                    >
+                      {anosDisponiveis.map((ano) => (
+                        <option key={ano} value={ano}>{ano}</option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-slate-500 mt-2">
+                      Os registros de outros anos permanecem salvos e não serão misturados.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={sair}
@@ -967,7 +1057,7 @@ export default function App() {
             <StatCard
               dark={dark}
               label="Em Andamento"
-              value={processos.length - concluidos}
+              value={processosAno.length - concluidos}
               icon={Clock}
               color="text-amber-500"
               onClick={() => toggleStatus('ANDAMENTO')}
@@ -1054,7 +1144,7 @@ export default function App() {
                   <Layers className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
 
                   {Object.entries(STATUS_FILTROS).map(([key, f]: [string, any]) => {
-                    const count = processos.filter(f.test).length;
+                    const count = processosAno.filter(f.test).length;
                     const on = statusFilter === key;
 
                     return (
@@ -1087,7 +1177,7 @@ export default function App() {
                 </div>
 
                 <p className={`text-[11px] ${muted}`} aria-live="polite">
-                  Exibindo <b>{filtered.length}</b> de {processos.length} processo(s)
+                  Exibindo <b>{filtered.length}</b> de {processosAno.length} processo(s)
                   {statusFilter !== 'TODOS' && (
                     <>
                       {' · '}
