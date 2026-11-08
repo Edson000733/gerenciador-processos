@@ -56,7 +56,7 @@ const emptyEmpenho = {
 
 const emptyProcesso = {
   processo: '',
-  unidDemandante: 'Fac Odonto',
+  unidDemandante: 'Fac Odonto UG 153139',
   tipo: 'Consumo',
   requisitante: '',
   beneficiario: '',
@@ -550,7 +550,7 @@ export default function App() {
 
     setNovo({
       processo: selected.processo,
-      unidDemandante: selected.unidDemandante || 'Fac Odonto',
+      unidDemandante: selected.unidDemandante || 'Fac Odonto UG 153139',
       tipo: selected.tipo || 'Consumo',
       requisitante: selected.requisitante || '',
       beneficiario: selected.beneficiario,
@@ -1638,10 +1638,12 @@ export default function App() {
             onChange={(e: any) => setUnidPrintFilter(e.target.value)}
           >
             <option value="TODAS">Imprimir Tudo (Todas as Unidades)</option>
-            <option value="Fac Odonto">Fac Odonto</option>
-            <option value="Fac Medicina">Fac Medicina</option>
-            <option value="IESC">IESC</option>
-            <option value="NEEDIER">NEEDIER</option>
+            <option value="Fac Odonto UG 153139">Fac Odonto UG 153139</option>
+            <option value="Fac Medicina UG 153138">Fac Medicina UG 153138</option>
+            <option value="ICES UG 152380">ICES UG 152380</option>
+            <option value="IESC UG 153515">IESC UG 153515</option>
+            <option value="IPPMG UG 153150">IPPMG UG 153150</option>
+            <option value="NEEDIER UG 157019">NEEDIER UG 157019</option>
           </Field>
 
           <div className="pt-2 flex justify-end gap-2">
@@ -1701,10 +1703,12 @@ export default function App() {
               value={novo.unidDemandante}
               onChange={(e: any) => setNovo({ ...novo, unidDemandante: e.target.value })}
             >
-              <option value="Fac Odonto">Fac Odonto</option>
-              <option value="Fac Medicina">Fac Medicina</option>
-              <option value="IESC">IESC</option>
-              <option value="NEEDIER">NEEDIER</option>
+              <option value="Fac Odonto UG 153139">Fac Odonto UG 153139</option>
+              <option value="Fac Medicina UG 153138">Fac Medicina UG 153138</option>
+              <option value="ICES UG 152380">ICES UG 152380</option>
+              <option value="IESC UG 153515">IESC UG 153515</option>
+              <option value="IPPMG UG 153150">IPPMG UG 153150</option>
+              <option value="NEEDIER UG 157019">NEEDIER UG 157019</option>
             </Field>
 
             <Field
@@ -1817,11 +1821,12 @@ export default function App() {
               value={novo.modalidade}
               onChange={(e: any) => setNovo({ ...novo, modalidade: e.target.value })}
             >
-              {!['ATA', 'Dispensa de Licitação', 'IRP', 'Pregão'].includes(novo.modalidade) && novo.modalidade && (
+              {!['ATA', 'Dispensa de Licitação', 'Inexigibilidade', 'IRP', 'Pregão'].includes(novo.modalidade) && novo.modalidade && (
                 <option value={novo.modalidade}>Valor atual: {novo.modalidade}</option>
               )}
               <option value="ATA">ATA</option>
               <option value="Dispensa de Licitação">Dispensa de Licitação</option>
+              <option value="Inexigibilidade">Inexigibilidade</option>
               <option value="IRP">IRP</option>
               <option value="Pregão">Pregão</option>
             </Field>
