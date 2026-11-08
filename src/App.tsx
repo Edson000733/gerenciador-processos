@@ -255,6 +255,9 @@ export default function App() {
   const [filterClass, setFilterClass] = useState('TODOS');
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [isHistOpen, setIsHistOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [unidPrintFilter, setUnidPrintFilter] = useState('TODAS');
+
   const [novo, setNovo] = useState<any>(emptyProcesso);
   const [ocorrencia, setOcorrencia] = useState({
     data: hoje(),
@@ -638,6 +641,12 @@ export default function App() {
     );
   }, [processosAno, searchTerm, filterClass, statusFilter]);
 
+  // PROCESSOS FILTRADOS EXCLUSIVAMENTE PARA IMPRESSÃO
+  const filteredPrint = useMemo(() => {
+    if (unidPrintFilter === 'TODAS') return filtered;
+    return filtered.filter((p) => p.unidDemandante === unidPrintFilter);
+  }, [filtered, unidPrintFilter]);
+
   const card = dark
     ? 'bg-[#1e293b] border-slate-700/60'
     : 'bg-white border-slate-200';
@@ -775,7 +784,10 @@ export default function App() {
   };
 
   const handlePrint = () => {
-    window.print();
+    setIsPrintModalOpen(false);
+    setTimeout(() => {
+      window.print();
+    }, 100);
   };
 
   const etapaIdx = selected
@@ -893,11 +905,11 @@ export default function App() {
       {/* RELATÓRIO PARA IMPRESSÃO */}
       <div className="print-only p-8">
         <h1 className="text-xl font-bold mb-1">
-          RELATÓRIO RESUMIDO DE PROCESSOS
+          RELATÓRIO RESUMIDO DE PROCESSOS {unidPrintFilter !== 'TODAS' ? `- UNID: ${unidPrintFilter}` : ''}
         </h1>
 
         <p className="text-xs text-slate-600 mb-4">
-          Gerado em: {hoje()} · Ano: {selectedYear} · Total de Processos: {filtered.length}
+          Gerado em: {hoje()} · Ano: {selectedYear} · Unidade: {unidPrintFilter} · Total de Processos Exibidos: {filteredPrint.length}
         </p>
 
         <table className="w-full border-collapse border border-slate-300 text-left text-xs">
@@ -916,7 +928,7 @@ export default function App() {
           </thead>
 
           <tbody>
-            {filtered.map((p) => (
+            {filteredPrint.map((p) => (
               <tr key={p.id}>
                 <td className="border border-slate-300 p-2 font-mono font-bold">{p.processo}</td>
                 <td className="border border-slate-300 p-2">{p.unidDemandante || '-'}</td>
@@ -1013,7 +1025,7 @@ export default function App() {
               </button>
 
               <button
-                onClick={handlePrint}
+                onClick={() => setIsPrintModalOpen(true)}
                 title="Imprimir Relatório"
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium shrink-0 transition ${
                   dark
@@ -1602,6 +1614,60 @@ export default function App() {
           </div>
         </main>
       </div>
+
+      {/* MODAL OPÇÕES DE IMPRESSÃO */}
+      <Modal
+        open={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        dark={dark}
+        size="max-w-md"
+        title="Imprimir Relatório"
+        icon={<Printer className="w-4 h-4 text-blue-500" />}
+      >
+        <div className="flex flex-col gap-4 text-xs">
+          <p className={muted}>
+            Selecione qual filtro deseja aplicar ao relatório impresso:
+          </p>
+
+          <Field
+            dark={dark}
+            id="print-unid-filter"
+            as="select"
+            label="Unidade Demandante"
+            value={unidPrintFilter}
+            onChange={(e: any) => setUnidPrintFilter(e.target.value)}
+          >
+            <option value="TODAS">Imprimir Tudo (Todas as Unidades)</option>
+            <option value="Fac Odonto">Fac Odonto</option>
+            <option value="Fac Medicina">Fac Medicina</option>
+            <option value="IESC">IESC</option>
+            <option value="NEEDIER">NEEDIER</option>
+          </Field>
+
+          <div className="pt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsPrintModalOpen(false)}
+              className={`px-4 py-2 rounded-lg border font-medium ${
+                dark
+                  ? 'border-slate-600 hover:bg-slate-700'
+                  : 'border-slate-300 hover:bg-slate-100'
+              }`}
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm inline-flex items-center gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Gerar e Imprimir
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* MODAL NOVO / EDITAR PROCESSO */}
       <Modal
