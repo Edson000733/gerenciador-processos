@@ -56,6 +56,8 @@ const emptyEmpenho = {
 
 const emptyProcesso = {
   processo: '',
+  unidDemandante: 'Fac Odonto',
+  tipo: 'Consumo',
   requisitante: '',
   beneficiario: '',
   cnpj: '',
@@ -545,6 +547,8 @@ export default function App() {
 
     setNovo({
       processo: selected.processo,
+      unidDemandante: selected.unidDemandante || 'Fac Odonto',
+      tipo: selected.tipo || 'Consumo',
       requisitante: selected.requisitante || '',
       beneficiario: selected.beneficiario,
       cnpj: selected.cnpj || '',
@@ -624,7 +628,9 @@ export default function App() {
           p.processo || '',
           p.beneficiario || '',
           p.requisitante || '',
-          p.objeto || ''
+          p.objeto || '',
+          p.unidDemandante || '',
+          p.tipo || ''
         ].some((f) => f.toLowerCase().includes(t)) &&
         (filterClass === 'TODOS' ||
           p.classificacao === filterClass) &&
@@ -898,6 +904,8 @@ export default function App() {
           <thead>
             <tr className="bg-slate-100">
               <th className="border border-slate-300 p-2 font-bold">Nº PROCESSO</th>
+              <th className="border border-slate-300 p-2 font-bold">UNID. DEMANDANTE</th>
+              <th className="border border-slate-300 p-2 font-bold">TIPO</th>
               <th className="border border-slate-300 p-2 font-bold">EMPENHO</th>
               <th className="border border-slate-300 p-2 font-bold">REQUISITANTE</th>
               <th className="border border-slate-300 p-2 font-bold">BENEFICIÁRIO</th>
@@ -911,6 +919,8 @@ export default function App() {
             {filtered.map((p) => (
               <tr key={p.id}>
                 <td className="border border-slate-300 p-2 font-mono font-bold">{p.processo}</td>
+                <td className="border border-slate-300 p-2">{p.unidDemandante || '-'}</td>
+                <td className="border border-slate-300 p-2">{p.tipo || '-'}</td>
                 <td className="border border-slate-300 p-2">{p.empenho || 'Pendente'}</td>
                 <td className="border border-slate-300 p-2">{p.requisitante || '-'}</td>
                 <td className="border border-slate-300 p-2">{p.beneficiario}</td>
@@ -1156,7 +1166,7 @@ export default function App() {
                           on
                             ? 'bg-blue-600 text-white'
                             : dark
-                              ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                              ? 'bg-[#1e293b] text-slate-400 hover:bg-slate-700'
                               : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                       >
@@ -1241,6 +1251,19 @@ export default function App() {
                             }`}>
                               {item.classificacao}
                             </span>
+                          </div>
+
+                          <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-400 font-medium">
+                            {item.unidDemandante && (
+                              <span className="px-1.5 py-0.5 rounded bg-slate-700/50 border border-slate-600/40 text-slate-300">
+                                {item.unidDemandante}
+                              </span>
+                            )}
+                            {item.tipo && (
+                              <span className="px-1.5 py-0.5 rounded bg-slate-700/50 border border-slate-600/40 text-slate-300">
+                                {item.tipo}
+                              </span>
+                            )}
                           </div>
 
                           {item.requisitante && (
@@ -1357,8 +1380,21 @@ export default function App() {
                           {selected.processo}
                         </h2>
 
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          {selected.unidDemandante && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                              Unid: {selected.unidDemandante}
+                            </span>
+                          )}
+                          {selected.tipo && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-700 text-slate-300">
+                              Tipo: {selected.tipo}
+                            </span>
+                          )}
+                        </div>
+
                         {selected.requisitante && (
-                          <p className="text-xs text-blue-400 mt-0.5 flex items-center gap-1">
+                          <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
                             <User className="w-3 h-3" />
                             Requisitante: <b>{selected.requisitante}</b>
                           </p>
@@ -1580,15 +1616,43 @@ export default function App() {
         }
       >
         <form onSubmit={createProcesso} className="flex flex-col gap-3 text-xs">
-          <Field
-            dark={dark}
-            id="n-proc"
-            label="Nº Processo *"
-            required
-            placeholder="23079.00123/2026-00"
-            value={novo.processo}
-            onChange={(e: any) => setNovo({ ...novo, processo: e.target.value })}
-          />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Field
+              dark={dark}
+              id="n-proc"
+              label="Nº Processo *"
+              required
+              placeholder="23079.00123/2026-00"
+              value={novo.processo}
+              onChange={(e: any) => setNovo({ ...novo, processo: e.target.value })}
+            />
+
+            <Field
+              dark={dark}
+              id="n-unid"
+              as="select"
+              label="Unid Demandante"
+              value={novo.unidDemandante}
+              onChange={(e: any) => setNovo({ ...novo, unidDemandante: e.target.value })}
+            >
+              <option value="Fac Odonto">Fac Odonto</option>
+              <option value="Fac Medicina">Fac Medicina</option>
+              <option value="IESC">IESC</option>
+              <option value="NEEDIER">NEEDIER</option>
+            </Field>
+
+            <Field
+              dark={dark}
+              id="n-tipo"
+              as="select"
+              label="Tipo"
+              value={novo.tipo}
+              onChange={(e: any) => setNovo({ ...novo, tipo: e.target.value })}
+            >
+              <option value="Consumo">Consumo</option>
+              <option value="Permanente">Permanente</option>
+            </Field>
+          </div>
 
           <Field
             dark={dark}
@@ -1670,11 +1734,12 @@ export default function App() {
               value={novo.fonte}
               onChange={(e: any) => setNovo({ ...novo, fonte: e.target.value })}
             >
-              {!['Participativo', 'PROAP'].includes(novo.fonte) && novo.fonte && (
+              {!['Participativo', 'PROAP', 'Outros'].includes(novo.fonte) && novo.fonte && (
                 <option value={novo.fonte}>Valor atual: {novo.fonte}</option>
               )}
               <option value="Participativo">Participativo</option>
               <option value="PROAP">PROAP</option>
+              <option value="Outros">Outros</option>
             </Field>
 
             <Field
