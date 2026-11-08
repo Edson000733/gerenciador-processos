@@ -1651,6 +1651,7 @@ export default function App() {
             >
               <option value="Consumo">Consumo</option>
               <option value="Permanente">Permanente</option>
+              <option value="Serviço">Serviço</option>
             </Field>
           </div>
 
