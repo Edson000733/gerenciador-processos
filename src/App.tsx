@@ -1665,18 +1665,34 @@ export default function App() {
             <Field
               dark={dark}
               id="n-fonte"
+              as="select"
               label="Fonte"
               value={novo.fonte}
               onChange={(e: any) => setNovo({ ...novo, fonte: e.target.value })}
-            />
+            >
+              {!['Participativo', 'PROAP'].includes(novo.fonte) && novo.fonte && (
+                <option value={novo.fonte}>Valor atual: {novo.fonte}</option>
+              )}
+              <option value="Participativo">Participativo</option>
+              <option value="PROAP">PROAP</option>
+            </Field>
 
             <Field
               dark={dark}
               id="n-mod"
+              as="select"
               label="Modalidade"
               value={novo.modalidade}
               onChange={(e: any) => setNovo({ ...novo, modalidade: e.target.value })}
-            />
+            >
+              {!['ATA', 'Dispensa de Licitação', 'IRP', 'Pregão'].includes(novo.modalidade) && novo.modalidade && (
+                <option value={novo.modalidade}>Valor atual: {novo.modalidade}</option>
+              )}
+              <option value="ATA">ATA</option>
+              <option value="Dispensa de Licitação">Dispensa de Licitação</option>
+              <option value="IRP">IRP</option>
+              <option value="Pregão">Pregão</option>
+            </Field>
           </div>
 
           <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
