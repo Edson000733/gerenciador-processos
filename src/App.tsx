@@ -21,19 +21,24 @@ const IDX_EMPENHO = ETAPAS.indexOf('EMPENHADO');
 const ETAPAS_PRE = ETAPAS.slice(0, IDX_EMPENHO);
 const ETAPAS_POS = ETAPAS.slice(IDX_EMPENHO + 1);
 
-const corEtapa = (s: string) =>
+const corEtapa = (s: string, dark: boolean) =>
   s === 'CONCLUÍDO' || s === 'EMPENHADO'
-    ? 'bg-emerald-500'
+    ? dark
+      ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.6)]'
+      : 'bg-emerald-600'
     : ETAPAS_PRE.includes(s)
-      ? 'bg-blue-500'
-      : 'bg-amber-500';
+      ? dark
+        ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]'
+        : 'bg-blue-600'
+      : dark
+        ? 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]'
+        : 'bg-amber-600';
 
 const hoje = () => new Date().toLocaleDateString('pt-BR');
 
 const anoDoProcesso = (p: any) => {
   if (p.ano) return String(p.ano);
 
-  // Compatibilidade com registros antigos que ainda não possuem o campo "ano".
   const anoData = String(p.dataCriacao || '').match(/\/(\d{4})$/)?.[1];
   if (anoData) return anoData;
 
@@ -78,17 +83,17 @@ function Field({
   children,
   ...props
 }: any) {
-  const cls = `w-full p-2.5 rounded-lg border outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition ${
+  const cls = `w-full p-2.5 rounded-lg border outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 font-semibold transition ${
     dark
-      ? 'bg-slate-800 border-slate-700 text-slate-100 placeholder-slate-500'
-      : 'bg-slate-50 border-slate-200 text-slate-800 placeholder-slate-400'
+      ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500'
+      : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
   }`;
 
   const El = as;
 
   return (
     <div>
-      <label htmlFor={id} className="block text-slate-400 font-medium mb-1">
+      <label htmlFor={id} className={`block font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
         {label}
       </label>
       <El id={id} className={cls} {...props}>
@@ -122,7 +127,7 @@ function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
       onClick={onClose}
     >
       <div
@@ -132,19 +137,19 @@ function Modal({
         onClick={(e) => e.stopPropagation()}
         className={`w-full ${size} max-h-[90vh] overflow-y-auto scroll-thin rounded-2xl border p-6 shadow-2xl relative ${
           dark
-            ? 'bg-[#1e293b] border-slate-700 text-slate-100'
+            ? 'bg-[#141c33] border-slate-700 text-slate-100'
             : 'bg-white border-slate-200 text-slate-800'
         }`}
       >
         <button
           onClick={onClose}
           aria-label="Fechar"
-          className="absolute right-4 top-4 text-slate-400 hover:text-slate-200"
+          className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 transition"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-base font-bold mb-4 flex items-center gap-2">
+        <h3 className={`text-base font-bold mb-4 flex items-center gap-2 ${dark ? 'text-white' : 'text-slate-900'}`}>
           {icon}
           {title}
         </h3>
@@ -159,30 +164,38 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  color,
+  colorDark,
+  colorLight,
+  glowColor,
   dark,
   onClick,
   active
 }: any) {
+  const color = dark ? colorDark : colorLight;
+
   const base = `p-4 rounded-xl border shadow-sm text-left w-full transition ${
     dark
-      ? 'bg-[#1e293b] border-slate-700/60'
-      : 'bg-white border-slate-200'
+      ? 'bg-[#141c33] border-slate-700/80'
+      : 'bg-white border-slate-300 shadow-slate-200/60'
   }`;
 
   const content = (
     <>
-      <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+      <div className={`flex items-center justify-between text-xs font-bold ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
         <span>{label}</span>
         <Icon className={`w-4 h-4 ${color}`} aria-hidden="true" />
       </div>
 
-      <div className={`mt-2 text-xl font-bold tracking-tight ${color}`}>
+      <div className={`mt-2 text-xl font-black tracking-tight ${color} ${dark && glowColor ? glowColor : ''}`}>
         {value}
       </div>
 
       {onClick && (
-        <div className={`mt-1 text-[10px] font-medium ${active ? 'text-blue-400' : 'text-slate-500'}`}>
+        <div className={`mt-1 text-[10px] font-bold ${
+          active
+            ? dark ? 'text-blue-400' : 'text-blue-700'
+            : dark ? 'text-slate-400' : 'text-slate-500'
+        }`}>
           {active ? 'Filtro ativo · clique para limpar' : 'Clique para filtrar'}
         </div>
       )}
@@ -198,10 +211,12 @@ function StatCard({
       aria-pressed={active}
       className={`${base} cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
         active
-          ? 'ring-2 ring-blue-500 border-blue-500/70'
+          ? dark
+            ? 'ring-2 ring-blue-500 border-blue-400 bg-blue-950/40 shadow-blue-500/20'
+            : 'ring-2 ring-blue-600 border-blue-600 bg-blue-50 shadow-blue-100'
           : dark
-            ? 'hover:border-slate-500 hover:bg-slate-800/80'
-            : 'hover:border-slate-300 hover:bg-slate-50'
+            ? 'hover:border-slate-500 hover:bg-slate-800'
+            : 'hover:border-slate-400 hover:bg-slate-50'
       }`}
     >
       {content}
@@ -648,10 +663,10 @@ export default function App() {
   }, [filtered, unidPrintFilter]);
 
   const card = dark
-    ? 'bg-[#1e293b] border-slate-700/60'
-    : 'bg-white border-slate-200';
+    ? 'bg-[#141c33] border-slate-700/80 text-slate-100'
+    : 'bg-white border-slate-300 text-slate-800 shadow-md shadow-slate-200/50';
 
-  const muted = dark ? 'text-slate-400' : 'text-slate-500';
+  const muted = dark ? 'text-slate-400' : 'text-slate-600';
 
   // CRIAR OU EDITAR PROCESSO
   const createProcesso = (e: React.FormEvent) => {
@@ -797,7 +812,7 @@ export default function App() {
   // TELA DE CARREGAMENTO
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] text-slate-300">
+      <div className={`min-h-screen flex items-center justify-center font-bold ${dark ? 'bg-[#0a0f1d] text-slate-300' : 'bg-slate-100 text-slate-700'}`}>
         Verificando acesso ao sistema...
       </div>
     );
@@ -806,28 +821,28 @@ export default function App() {
   // TELA DE LOGIN
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f172a] p-4">
+      <div className={`min-h-screen flex items-center justify-center p-4 ${dark ? 'bg-[#0a0f1d]' : 'bg-slate-100'}`}>
         <form
           onSubmit={entrar}
-          className="w-full max-w-md bg-[#1e293b] border border-slate-700 rounded-2xl p-8 shadow-2xl"
+          className={`w-full max-w-md border rounded-2xl p-8 shadow-2xl ${dark ? 'bg-[#141c33] border-slate-700' : 'bg-white border-slate-300'}`}
         >
           <div className="flex justify-center mb-5">
-            <div className="p-3 bg-blue-600 rounded-xl text-white">
+            <div className="p-3 bg-blue-600 rounded-xl text-white shadow-lg shadow-blue-600/30">
               <FileText className="w-8 h-8" />
             </div>
           </div>
 
-          <h1 className="text-xl font-bold text-center text-white">
+          <h1 className={`text-xl font-black text-center tracking-wide ${dark ? 'text-white' : 'text-slate-900'}`}>
             SISTEMA DE ACOMPANHAMENTO
           </h1>
 
-          <p className="text-sm text-slate-400 text-center mt-2 mb-7">
+          <p className={`text-xs text-center mt-2 mb-7 font-bold ${muted}`}>
             Informe suas credenciais para acessar o sistema.
           </p>
 
           <div className="flex flex-col gap-4">
             <div>
-              <label className="block text-sm text-slate-300 mb-1">
+              <label className={`block text-xs font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
                 E-mail
               </label>
 
@@ -836,13 +851,15 @@ export default function App() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full p-3 rounded-lg bg-slate-800 border border-slate-600 text-white outline-none focus:border-blue-500"
+                className={`w-full p-3 rounded-lg border outline-none font-semibold focus:border-blue-500 ${
+                  dark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                }`}
                 placeholder="seu@email.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-slate-300 mb-1">
+              <label className={`block text-xs font-bold mb-1 ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
                 Senha
               </label>
 
@@ -851,13 +868,15 @@ export default function App() {
                 required
                 value={senha}
                 onChange={(e) => setSenha(e.target.value)}
-                className="w-full p-3 rounded-lg bg-slate-800 border border-slate-600 text-white outline-none focus:border-blue-500"
+                className={`w-full p-3 rounded-lg border outline-none font-semibold focus:border-blue-500 ${
+                  dark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
+                }`}
                 placeholder="Sua senha"
               />
             </div>
 
             {loginError && (
-              <p className="text-sm text-rose-400">
+              <p className="text-xs font-bold text-rose-500">
                 {loginError}
               </p>
             )}
@@ -865,7 +884,7 @@ export default function App() {
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full p-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold disabled:opacity-50"
+              className="w-full p-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-black shadow-lg shadow-blue-600/30 transition disabled:opacity-50"
             >
               {loginLoading ? 'Entrando...' : 'Entrar no Sistema'}
             </button>
@@ -878,11 +897,11 @@ export default function App() {
   // AGUARDA O CARREGAMENTO DOS DADOS
   if (!dadosCarregados) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f172a] text-slate-300 p-4">
+      <div className={`min-h-screen flex flex-col items-center justify-center p-4 font-bold ${dark ? 'bg-[#0a0f1d] text-slate-300' : 'bg-slate-100 text-slate-700'}`}>
         <p>Carregando processos...</p>
 
         {erroBanco && (
-          <p className="text-rose-400 mt-3 text-sm">
+          <p className="text-rose-500 mt-3 text-xs font-black">
             {erroBanco}
           </p>
         )}
@@ -891,7 +910,7 @@ export default function App() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors ${dark ? 'bg-[#0f172a] text-slate-100' : 'bg-slate-50 text-slate-800'}`}>
+    <div className={`min-h-screen transition-colors ${dark ? 'bg-[#0a0f1d] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
 
       <style>{`
         @media print {
@@ -947,20 +966,20 @@ export default function App() {
 
       {/* PAINEL PRINCIPAL */}
       <div className="no-print">
-        <header className={`sticky top-0 z-30 border-b backdrop-blur-md ${dark ? 'bg-[#1e293b]/90 border-slate-700/60' : 'bg-white/90 border-slate-200'}`}>
+        <header className={`sticky top-0 z-30 border-b backdrop-blur-md ${dark ? 'bg-[#141c33]/90 border-slate-800' : 'bg-white/90 border-slate-200 shadow-sm'}`}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
 
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/20 shrink-0">
+              <div className="p-2.5 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/40 shrink-0">
                 <FileText className="w-5 h-5" aria-hidden="true" />
               </div>
 
               <div className="min-w-0">
-                <h1 className="text-sm sm:text-lg font-bold tracking-tight truncate">
+                <h1 className={`text-sm sm:text-lg font-black tracking-tight truncate ${dark ? 'text-white' : 'text-slate-900'}`}>
                   SISTEMA DE ACOMPANHAMENTO DE PROCESSOS
                 </h1>
 
-                <p className={`text-xs ${muted} truncate`}>
+                <p className={`text-xs ${muted} truncate font-semibold`}>
                   Ficha de Registro e Histórico de Ocorrências
                 </p>
               </div>
@@ -975,50 +994,47 @@ export default function App() {
                   aria-expanded={showYearSelector}
                   aria-label={`Selecionar ano. Ano atual: ${selectedYear}`}
                   title="Organizar processos por ano"
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold ${
                     dark
-                      ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200'
-                      : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                      ? 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-200'
+                      : 'bg-slate-100 border-slate-300 hover:bg-slate-200 text-slate-800'
                   }`}
                 >
-                  <Settings2 className="w-3.5 h-3.5 text-blue-400" />
+                  <Settings2 className={`w-3.5 h-3.5 ${dark ? 'text-sky-400' : 'text-blue-600'}`} />
                   <span>Ano: {selectedYear}</span>
                 </button>
 
                 {showYearSelector && (
-                  <div className={`absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border p-3 shadow-xl ${
-                    dark ? 'bg-[#1e293b] border-slate-700' : 'bg-white border-slate-200'
+                  <div className={`absolute right-0 top-full mt-2 z-50 w-52 rounded-xl border p-3 shadow-2xl ${
+                    dark ? 'bg-[#141c33] border-slate-700' : 'bg-white border-slate-300'
                   }`}>
-                    <label htmlFor="seletor-ano" className="block text-xs font-semibold mb-2 text-slate-400">
+                    <label htmlFor="seletor-ano" className={`block text-xs font-bold mb-2 ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
                       Visualizar processos do ano
                     </label>
                     <select
                       id="seletor-ano"
                       value={selectedYear}
                       onChange={(e) => selecionarAno(e.target.value)}
-                      className={`w-full p-2 rounded-lg border text-sm outline-none focus:border-blue-500 ${
+                      className={`w-full p-2 rounded-lg border text-sm outline-none font-bold ${
                         dark
-                          ? 'bg-slate-800 border-slate-700 text-slate-100'
-                          : 'bg-slate-50 border-slate-200 text-slate-800'
+                          ? 'bg-slate-900 border-slate-700 text-slate-100'
+                          : 'bg-slate-50 border-slate-300 text-slate-900'
                       }`}
                     >
                       {anosDisponiveis.map((ano) => (
                         <option key={ano} value={ano}>{ano}</option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-slate-500 mt-2">
-                      Os registros de outros anos permanecem salvos e não serão misturados.
-                    </p>
                   </div>
                 )}
               </div>
 
               <button
                 onClick={sair}
-                className={`px-3 py-1.5 rounded-lg border text-xs font-medium shrink-0 ${
+                className={`px-3 py-1.5 rounded-lg border text-xs font-bold shrink-0 ${
                   dark
-                    ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200'
-                    : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                    ? 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-200'
+                    : 'bg-slate-100 border-slate-300 hover:bg-slate-200 text-slate-800'
                 }`}
               >
                 Sair
@@ -1027,13 +1043,13 @@ export default function App() {
               <button
                 onClick={() => setIsPrintModalOpen(true)}
                 title="Imprimir Relatório"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium shrink-0 transition ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-bold shrink-0 transition ${
                   dark
-                    ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200'
-                    : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                    ? 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-200'
+                    : 'bg-slate-100 border-slate-300 hover:bg-slate-200 text-slate-800'
                 }`}
               >
-                <Printer className="w-4 h-4 text-blue-400" />
+                <Printer className={`w-4 h-4 ${dark ? 'text-sky-400' : 'text-blue-600'}`} />
                 <span className="hidden sm:inline">Imprimir Resumo</span>
               </button>
 
@@ -1042,8 +1058,8 @@ export default function App() {
                 aria-label={dark ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
                 className={`p-2 rounded-lg border shrink-0 ${
                   dark
-                    ? 'bg-slate-800 border-slate-700 hover:bg-slate-700 text-amber-400'
-                    : 'bg-slate-100 border-slate-200 hover:bg-slate-200 text-slate-700'
+                    ? 'bg-slate-900 border-slate-700 hover:bg-slate-800 text-amber-400'
+                    : 'bg-slate-100 border-slate-300 hover:bg-slate-200 text-slate-800'
                 }`}
               >
                 {dark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -1055,23 +1071,48 @@ export default function App() {
         <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col gap-6">
 
           {erroBanco && (
-            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm">
+            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/40 text-rose-500 text-xs font-black">
               {erroBanco}
             </div>
           )}
 
-          {/* RESUMO */}
+          {/* RESUMO MÉTRICAS - ADAPTÁVEL DARK/LIGHT */}
           <section aria-label="Resumo" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <StatCard dark={dark} label="Valor Bruto" value={brl(totalBruto)} icon={DollarSign} color="text-blue-500" />
-            <StatCard dark={dark} label="DARF / Retenção" value={brl(totalRet)} icon={AlertCircle} color="text-rose-500" />
-            <StatCard dark={dark} label="Valor Líquido" value={brl(totalBruto - totalRet)} icon={FileCheck} color="text-emerald-500" />
+            <StatCard 
+              dark={dark} 
+              label="Valor Bruto" 
+              value={brl(totalBruto)} 
+              icon={DollarSign} 
+              colorDark="text-sky-400" 
+              colorLight="text-sky-700"
+              glowColor="drop-shadow-[0_0_8px_rgba(56,189,248,0.4)]" 
+            />
+            <StatCard 
+              dark={dark} 
+              label="DARF / Retenção" 
+              value={brl(totalRet)} 
+              icon={AlertCircle} 
+              colorDark="text-rose-400" 
+              colorLight="text-rose-700"
+              glowColor="drop-shadow-[0_0_8px_rgba(251,113,133,0.4)]" 
+            />
+            <StatCard 
+              dark={dark} 
+              label="Valor Líquido" 
+              value={brl(totalBruto - totalRet)} 
+              icon={FileCheck} 
+              colorDark="text-emerald-400" 
+              colorLight="text-emerald-700"
+              glowColor="drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]" 
+            />
 
             <StatCard
               dark={dark}
               label="Concluídos"
               value={concluidos}
               icon={CheckCircle2}
-              color="text-emerald-500"
+              colorDark="text-emerald-400"
+              colorLight="text-emerald-700"
               onClick={() => toggleStatus('CONCLUIDOS')}
               active={statusFilter === 'CONCLUIDOS'}
             />
@@ -1081,7 +1122,8 @@ export default function App() {
               label="Em Andamento"
               value={processosAno.length - concluidos}
               icon={Clock}
-              color="text-amber-500"
+              colorDark="text-amber-400"
+              colorLight="text-amber-700"
               onClick={() => toggleStatus('ANDAMENTO')}
               active={statusFilter === 'ANDAMENTO'}
             />
@@ -1091,7 +1133,8 @@ export default function App() {
               label="Aguardando Empenho"
               value={semEmpenho}
               icon={FileText}
-              color="text-sky-400"
+              colorDark="text-sky-400"
+              colorLight="text-sky-700"
               onClick={() => toggleStatus('SEM_EMPENHO')}
               active={statusFilter === 'SEM_EMPENHO'}
             />
@@ -1102,18 +1145,18 @@ export default function App() {
             {/* LISTA DE PROCESSOS */}
             <section
               aria-label="Processos cadastrados"
-              className={`lg:col-span-5 rounded-2xl border p-4 shadow-sm flex flex-col lg:h-[740px] ${card}`}
+              className={`lg:col-span-5 rounded-2xl border p-4 flex flex-col lg:h-[740px] ${card}`}
             >
-              <div className={`flex flex-col gap-3 pb-3 border-b ${dark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+              <div className={`flex flex-col gap-3 pb-3 border-b ${dark ? 'border-slate-800' : 'border-slate-200'}`}>
 
                 <div className="flex items-center justify-between">
-                  <h2 className="font-bold text-sm uppercase tracking-wider text-slate-400">
+                  <h2 className={`font-black text-xs uppercase tracking-wider ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
                     Processos Cadastrados
                   </h2>
 
                   <button
                     onClick={openNovo}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black shadow-md shadow-blue-600/30 transition"
                   >
                     <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                     Novo Processo
@@ -1121,7 +1164,7 @@ export default function App() {
                 </div>
 
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                  <Search className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${dark ? 'text-slate-400' : 'text-slate-500'}`} aria-hidden="true" />
 
                   <label htmlFor="busca" className="sr-only">
                     Buscar processos
@@ -1133,10 +1176,10 @@ export default function App() {
                     placeholder="Buscar por processo, requisitante ou beneficiário..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className={`w-full pl-9 pr-4 py-2 text-xs rounded-lg border outline-none focus:border-blue-500 ${
+                    className={`w-full pl-9 pr-4 py-2 text-xs font-semibold rounded-lg border outline-none focus:border-blue-500 ${
                       dark
-                        ? 'bg-slate-800/80 border-slate-700 text-slate-200 placeholder-slate-500'
-                        : 'bg-slate-50 border-slate-200 placeholder-slate-400'
+                        ? 'bg-slate-900 border-slate-700 text-slate-100 placeholder-slate-500'
+                        : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400'
                     }`}
                   />
                 </div>
@@ -1149,12 +1192,12 @@ export default function App() {
                       key={c}
                       onClick={() => setFilterClass(c)}
                       aria-pressed={filterClass === c}
-                      className={`px-2.5 py-1 rounded-md font-medium whitespace-nowrap text-[11px] ${
+                      className={`px-2.5 py-1 rounded-md font-bold whitespace-nowrap text-[11px] transition ${
                         filterClass === c
-                          ? 'bg-blue-600 text-white'
+                          ? 'bg-blue-600 text-white shadow-sm'
                           : dark
-                            ? 'bg-slate-800 text-slate-400 hover:bg-slate-700'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            ? 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
+                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
                       }`}
                     >
                       {c}
@@ -1174,12 +1217,12 @@ export default function App() {
                         key={key}
                         onClick={() => setStatusFilter(key)}
                         aria-pressed={on}
-                        className={`px-2.5 py-1 rounded-md font-medium whitespace-nowrap text-[11px] inline-flex items-center gap-1.5 ${
+                        className={`px-2.5 py-1 rounded-md font-bold whitespace-nowrap text-[11px] inline-flex items-center gap-1.5 transition ${
                           on
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-blue-600 text-white shadow-sm'
                             : dark
-                              ? 'bg-[#1e293b] text-slate-400 hover:bg-slate-700'
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              ? 'bg-slate-900 text-slate-300 hover:bg-slate-800 border border-slate-700/80'
+                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
                         }`}
                       >
                         {f.label}
@@ -1188,8 +1231,8 @@ export default function App() {
                           on
                             ? 'bg-white/20'
                             : dark
-                              ? 'bg-slate-700'
-                              : 'bg-slate-200'
+                              ? 'bg-slate-800 border border-slate-700'
+                              : 'bg-slate-200 text-slate-800'
                         }`}>
                           {count}
                         </span>
@@ -1198,12 +1241,12 @@ export default function App() {
                   })}
                 </div>
 
-                <p className={`text-[11px] ${muted}`} aria-live="polite">
+                <p className={`text-[11px] ${muted} font-semibold`} aria-live="polite">
                   Exibindo <b>{filtered.length}</b> de {processosAno.length} processo(s)
                   {statusFilter !== 'TODOS' && (
                     <>
                       {' · '}
-                      <span className="text-blue-400">
+                      <span className={`font-bold ${dark ? 'text-blue-400' : 'text-blue-700'}`}>
                         {STATUS_FILTROS[statusFilter].label}
                       </span>
                     </>
@@ -1213,7 +1256,7 @@ export default function App() {
 
               <ul className="flex-1 overflow-y-auto scroll-thin pt-3 flex flex-col gap-2.5 pr-1">
                 {filtered.length === 0 ? (
-                  <li className="text-center py-12 text-slate-400 text-xs">
+                  <li className="text-center py-12 text-slate-400 text-xs font-bold">
                     Nenhum processo encontrado com esses termos.
                   </li>
                 ) : (
@@ -1226,78 +1269,88 @@ export default function App() {
                         <button
                           onClick={() => setSelectedId(item.id)}
                           aria-current={sel}
-                          className={`w-full text-left p-3.5 rounded-xl border transition ${
+                          className={`w-full text-left p-3.5 rounded-xl border transition shadow-sm ${
                             sel
                               ? dark
-                                ? 'bg-blue-900/30 border-blue-500/70 ring-1 ring-blue-500/30'
-                                : 'bg-blue-50/80 border-blue-300 ring-1 ring-blue-400/30'
+                                ? 'bg-blue-950/50 border-2 border-blue-500 ring-2 ring-blue-500/20 shadow-blue-500/20'
+                                : 'bg-blue-50 border-2 border-blue-600 ring-2 ring-blue-600/20 shadow-md'
                               : dark
-                                ? 'bg-slate-800/40 border-slate-700/50 hover:bg-slate-800/80'
-                                : 'bg-slate-50/50 border-slate-200 hover:bg-slate-100/80'
+                                ? 'bg-slate-900/60 border-slate-700/80 hover:bg-slate-800/80'
+                                : 'bg-white border-slate-300 hover:bg-slate-50'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <span className="font-bold text-sm tracking-wide text-blue-400 font-mono">
+                              <span className={`font-black text-sm tracking-wide font-mono ${dark ? 'text-blue-400' : 'text-blue-700'}`}>
                                 {item.processo}
                               </span>
 
-                              <p className={`text-xs mt-0.5 ${muted}`}>
+                              <p className={`text-xs mt-0.5 ${dark ? 'text-slate-400' : 'text-slate-600'}`}>
                                 {item.empenho ? (
                                   <>
                                     Empenho:{' '}
-                                    <span className="font-medium">{item.empenho}</span>
+                                    <span className={`font-bold ${dark ? 'text-slate-200' : 'text-slate-900'}`}>{item.empenho}</span>
                                   </>
                                 ) : (
-                                  <span className="text-sky-400 font-medium">
+                                  <span className={`font-bold ${dark ? 'text-sky-400' : 'text-sky-700'}`}>
                                     Aguardando empenho
                                   </span>
                                 )}
                               </p>
                             </div>
 
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border shadow-sm ${
                               item.classificacao === 'CUSTEIO'
-                                ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
-                                : 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                                ? dark ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-amber-100 text-amber-900 border-amber-400'
+                                : dark ? 'bg-purple-600 text-white border-purple-400' : 'bg-purple-100 text-purple-900 border-purple-400'
                             }`}>
                               {item.classificacao}
                             </span>
                           </div>
 
-                          <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-400 font-medium">
+                          <div className="mt-1 flex flex-wrap gap-2 text-[10px]">
                             {item.unidDemandante && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-700/50 border border-slate-600/40 text-slate-300">
+                              <span className={`px-1.5 py-0.5 rounded font-bold border ${
+                                dark 
+                                  ? 'bg-slate-900 text-sky-300 border-sky-500/40' 
+                                  : 'bg-sky-50 text-sky-800 border-sky-300'
+                              }`}>
                                 {item.unidDemandante}
                               </span>
                             )}
                             {item.tipo && (
-                              <span className="px-1.5 py-0.5 rounded bg-slate-700/50 border border-slate-600/40 text-slate-300">
+                              <span className={`px-1.5 py-0.5 rounded font-bold border ${
+                                dark 
+                                  ? 'bg-slate-900 text-slate-300 border-slate-700' 
+                                  : 'bg-slate-100 text-slate-700 border-slate-300'
+                              }`}>
                                 {item.tipo}
                               </span>
                             )}
                           </div>
 
                           {item.requisitante && (
-                            <div className="mt-1.5 text-[11px] text-slate-400 flex items-center gap-1">
-                              <User className="w-3 h-3 text-blue-400" />
+                            <div className={`mt-1.5 text-[11px] flex items-center gap-1 font-bold ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
+                              <User className={`w-3 h-3 ${dark ? 'text-blue-400' : 'text-blue-600'}`} />
                               Req: {item.requisitante}
                             </div>
                           )}
 
-                          <div className="mt-1 text-xs font-medium truncate">
+                          <div className={`mt-1 text-xs font-black truncate ${dark ? 'text-slate-100' : 'text-slate-900'}`}>
                             {item.beneficiario}
                           </div>
 
                           <div className={`mt-3 flex items-center justify-between text-[11px] pt-2 border-t ${
-                            dark ? 'border-slate-700/40' : 'border-slate-200'
+                            dark ? 'border-slate-800' : 'border-slate-200'
                           }`}>
-                            <span className="text-slate-400">
+                            <span className={`font-semibold ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                               {item.dataCriacao}
                             </span>
 
-                            <span className={`font-semibold ${
-                              done ? 'text-emerald-500' : 'text-amber-500'
+                            <span className={`font-black ${
+                              done 
+                                ? dark ? 'text-emerald-400' : 'text-emerald-700'
+                                : dark ? 'text-amber-400' : 'text-amber-700'
                             }`}>
                               {item.statusGeral}
                             </span>
@@ -1313,23 +1366,23 @@ export default function App() {
             {/* DETALHES DO PROCESSO */}
             <section
               aria-label="Detalhes do processo"
-              className={`lg:col-span-7 rounded-2xl border p-6 shadow-sm lg:min-h-[740px] ${card}`}
+              className={`lg:col-span-7 rounded-2xl border p-6 lg:min-h-[740px] ${card}`}
             >
               {selected ? (
                 <div className="flex flex-col gap-6">
 
-                  <div className={`border-b pb-5 ${dark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+                  <div className={`border-b pb-5 ${dark ? 'border-slate-800' : 'border-slate-200'}`}>
                     <div className="flex flex-wrap items-center justify-between gap-2">
 
                       <div className="flex items-center gap-2">
-                        <span className="text-xs px-2.5 py-1 font-bold rounded-md bg-blue-600 text-white">
+                        <span className="text-xs px-2.5 py-1 font-black rounded-md bg-blue-600 text-white shadow-sm">
                           {selected.modalidade}
                         </span>
 
-                        <span className={`text-xs px-2.5 py-1 font-bold rounded-md border ${
+                        <span className={`text-xs px-2.5 py-1 font-black rounded-md border shadow-sm ${
                           selected.classificacao === 'CUSTEIO'
-                            ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
-                            : 'bg-purple-500/15 text-purple-400 border-purple-500/30'
+                            ? dark ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-amber-200 text-amber-950 border-amber-400'
+                            : dark ? 'bg-purple-600 text-white border-purple-400' : 'bg-purple-200 text-purple-950 border-purple-400'
                         }`}>
                           {selected.classificacao}
                         </span>
@@ -1340,10 +1393,10 @@ export default function App() {
                           onClick={openEditProcesso}
                           aria-label="Editar processo"
                           title="Editar processo"
-                          className={`p-1.5 rounded-lg border text-blue-400 ${
+                          className={`p-1.5 rounded-lg border ${
                             dark
-                              ? 'border-slate-700 hover:bg-blue-500/10'
-                              : 'border-slate-200 hover:bg-blue-50'
+                              ? 'border-slate-700 bg-slate-900 text-sky-400 hover:bg-slate-800'
+                              : 'border-slate-300 bg-slate-50 text-blue-700 hover:bg-slate-100'
                           }`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -1353,10 +1406,10 @@ export default function App() {
                           onClick={removeProcesso}
                           aria-label="Excluir processo"
                           title="Excluir processo"
-                          className={`p-1.5 rounded-lg border text-rose-500 ${
+                          className={`p-1.5 rounded-lg border ${
                             dark
-                              ? 'border-slate-700 hover:bg-rose-500/10'
-                              : 'border-slate-200 hover:bg-rose-50'
+                              ? 'border-slate-700 bg-slate-900 text-rose-400 hover:bg-slate-800'
+                              : 'border-slate-300 bg-slate-50 text-rose-700 hover:bg-slate-100'
                           }`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1365,7 +1418,7 @@ export default function App() {
                         {!selected.empenho && (
                           <button
                             onClick={openEmpenho}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-sm"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black shadow-md shadow-blue-600/30 transition"
                           >
                             <FileCheck className="w-3.5 h-3.5" aria-hidden="true" />
                             Registrar Empenho
@@ -1374,7 +1427,7 @@ export default function App() {
 
                         <button
                           onClick={openOcorrencia}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black shadow-md shadow-emerald-600/30 transition"
                         >
                           <Plus className="w-3.5 h-3.5" aria-hidden="true" />
                           Nova Movimentação
@@ -1384,41 +1437,49 @@ export default function App() {
 
                     <div className="mt-4 flex flex-col sm:flex-row justify-between sm:items-end gap-2">
                       <div>
-                        <p className={`text-[11px] uppercase font-semibold tracking-wider ${muted}`}>
-                          Nº Processo
+                        <p className={`text-[11px] font-black uppercase tracking-wider ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          Nº PROCESSO
                         </p>
 
-                        <h2 className="text-xl sm:text-2xl font-black tracking-tight font-mono">
+                        <h2 className={`text-xl sm:text-2xl font-black font-mono tracking-wide ${dark ? 'text-white' : 'text-slate-900'}`}>
                           {selected.processo}
                         </h2>
 
                         <div className="flex flex-wrap items-center gap-2 mt-1">
                           {selected.unidDemandante && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                              dark 
+                                ? 'bg-blue-500/20 text-blue-300 border-blue-500/40' 
+                                : 'bg-blue-100 text-blue-900 border-blue-300'
+                            }`}>
                               Unid: {selected.unidDemandante}
                             </span>
                           )}
                           {selected.tipo && (
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-700 text-slate-300">
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded border ${
+                              dark 
+                                ? 'bg-slate-800 text-slate-300 border-slate-700' 
+                                : 'bg-slate-200 text-slate-800 border-slate-300'
+                            }`}>
                               Tipo: {selected.tipo}
                             </span>
                           )}
                         </div>
 
                         {selected.requisitante && (
-                          <p className="text-xs text-blue-400 mt-1 flex items-center gap-1">
+                          <p className={`text-xs mt-1 flex items-center gap-1 font-bold ${dark ? 'text-sky-400' : 'text-blue-700'}`}>
                             <User className="w-3 h-3" />
                             Requisitante: <b>{selected.requisitante}</b>
                           </p>
                         )}
 
-                        <p className={`text-xs mt-1 ${muted}`}>
+                        <p className={`text-xs mt-1 font-semibold ${muted}`}>
                           Empenho: {selected.empenho ? (
-                            <span className="font-mono text-blue-400 font-semibold">
+                            <span className={`font-mono font-bold ${dark ? 'text-blue-400' : 'text-blue-700'}`}>
                               {selected.empenho}
                             </span>
                           ) : (
-                            <span className="text-sky-400 font-semibold">
+                            <span className={`font-bold ${dark ? 'text-sky-400' : 'text-sky-700'}`}>
                               ainda não empenhado
                             </span>
                           )}
@@ -1426,39 +1487,42 @@ export default function App() {
                       </div>
 
                       <div className="sm:text-right">
-                        <div className="text-xs text-slate-400">
+                        <div className={`text-xs font-bold ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                           {selected.empenho ? 'Valor Líquido' : 'Valor Estimado'}
                         </div>
 
-                        <div className="text-xl font-extrabold text-emerald-500">
+                        <div className={`text-2xl font-black ${
+                          dark 
+                            ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.3)]' 
+                            : 'text-emerald-700'
+                        }`}>
                           {brl((selected.valorBruto || 0) - (selected.darfRetencao || 0))}
                         </div>
                       </div>
                     </div>
 
-                    <ol className="mt-5 grid grid-cols-7 gap-1.5" aria-label="Etapas do processo">
+                    {/* BARRA DE PROGRESSO NEON / SOLIDA */}
+                    <ol className="mt-6 grid grid-cols-7 gap-1.5" aria-label="Etapas do processo">
                       {ETAPAS.map((et, i) => (
                         <li
                           key={et}
                           className="flex flex-col gap-1.5"
                           aria-current={i === etapaIdx ? 'step' : undefined}
                         >
-                          <div className={`h-1.5 rounded-full ${
+                          <div className={`h-2 rounded-full ${
                             i <= etapaIdx
-                              ? etapaIdx === ETAPAS.length - 1
-                                ? 'bg-emerald-500'
-                                : 'bg-blue-500'
+                              ? dark 
+                                ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.7)]' 
+                                : 'bg-emerald-600'
                               : dark
-                                ? 'bg-slate-700'
-                                : 'bg-slate-200'
+                                ? 'bg-slate-900 border border-slate-700'
+                                : 'bg-slate-200 border border-slate-300'
                           }`} />
 
-                          <span className={`text-[9px] sm:text-[10px] font-semibold leading-tight ${
+                          <span className={`text-[9px] sm:text-[10px] font-black leading-tight ${
                             i <= etapaIdx
-                              ? dark
-                                ? 'text-slate-200'
-                                : 'text-slate-700'
-                              : 'text-slate-500'
+                              ? dark ? 'text-white' : 'text-slate-900'
+                              : 'text-slate-400'
                           }`}>
                             {et}
                           </span>
@@ -1470,26 +1534,26 @@ export default function App() {
                   {/* DADOS DO BENEFICIÁRIO E FINANCEIROS */}
                   <div className={`p-4 rounded-xl border grid grid-cols-1 md:grid-cols-2 gap-4 ${
                     dark
-                      ? 'bg-slate-800/40 border-slate-700/50'
-                      : 'bg-slate-50 border-slate-200'
+                      ? 'bg-slate-900/90 border-slate-700'
+                      : 'bg-slate-50 border-slate-300'
                   }`}>
                     <div>
-                      <span className="text-[11px] font-semibold text-slate-400 block uppercase">
+                      <span className={`text-[11px] font-black block uppercase ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                         Beneficiário
                       </span>
 
-                      <div className="text-xs font-bold mt-0.5">
+                      <div className={`text-xs font-black mt-0.5 ${dark ? 'text-white' : 'text-slate-900'}`}>
                         {selected.beneficiario}
                       </div>
 
                       {selected.cnpj && (
-                        <div className="text-[11px] text-slate-500 mt-0.5">
+                        <div className={`text-[11px] font-semibold mt-0.5 ${dark ? 'text-slate-400' : 'text-slate-600'}`}>
                           CNPJ: {selected.cnpj}
                         </div>
                       )}
 
                       {selected.telefone && (
-                        <div className="text-[11px] text-blue-400 mt-1 flex items-center gap-1 font-medium">
+                        <div className={`text-[11px] mt-1 flex items-center gap-1 font-bold ${dark ? 'text-sky-400' : 'text-blue-700'}`}>
                           <Phone className="w-3 h-3" aria-hidden="true" />
                           {selected.telefone}
                         </div>
@@ -1497,37 +1561,33 @@ export default function App() {
                     </div>
 
                     <div>
-                      <span className="text-[11px] font-semibold text-slate-400 block uppercase">
+                      <span className={`text-[11px] font-black block uppercase ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                         Objeto
                       </span>
 
-                      <div className="text-xs font-bold mt-0.5">
+                      <div className={`text-xs font-bold mt-0.5 ${dark ? 'text-white' : 'text-slate-900'}`}>
                         {selected.objeto || 'Não informado'}
                       </div>
                     </div>
 
-                    <div className={`pt-2 border-t ${
-                      dark ? 'border-slate-700/40' : 'border-slate-200'
-                    }`}>
-                      <span className="text-[11px] font-semibold text-slate-400 block uppercase">
+                    <div className={`pt-2 border-t ${dark ? 'border-slate-800' : 'border-slate-200'}`}>
+                      <span className={`text-[11px] font-black block uppercase ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                         Classificação / Fonte
                       </span>
 
-                      <div className="text-xs mt-0.5">
+                      <div className={`text-xs mt-0.5 font-semibold ${dark ? 'text-slate-200' : 'text-slate-800'}`}>
                         Classificação: <b>{selected.classificacao}</b> | Fonte: <b>{selected.fonte}</b>
                       </div>
                     </div>
 
-                    <div className={`pt-2 border-t ${
-                      dark ? 'border-slate-700/40' : 'border-slate-200'
-                    }`}>
-                      <span className="text-[11px] font-semibold text-slate-400 block uppercase">
+                    <div className={`pt-2 border-t ${dark ? 'border-slate-800' : 'border-slate-200'}`}>
+                      <span className={`text-[11px] font-black block uppercase ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
                         Detalhamento Financeiro
                       </span>
 
-                      <div className="text-xs mt-0.5">
-                        Bruto: <b>{brl(selected.valorBruto)}</b>
-                        <span className="text-rose-500">
+                      <div className={`text-xs mt-0.5 font-semibold ${dark ? 'text-slate-200' : 'text-slate-800'}`}>
+                        Bruto: <b className={dark ? 'text-sky-400' : 'text-blue-700'}>{brl(selected.valorBruto)}</b>
+                        <span className={dark ? 'text-rose-400' : 'text-rose-700'}>
                           {' '}| DARF: <b>{brl(selected.darfRetencao)}</b>
                         </span>
                       </div>
@@ -1536,30 +1596,30 @@ export default function App() {
 
                   {/* HISTÓRICO */}
                   <div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-blue-400" aria-hidden="true" />
+                    <h3 className={`text-xs font-black uppercase tracking-wider mb-4 flex items-center gap-2 ${dark ? 'text-slate-300' : 'text-slate-700'}`}>
+                      <Clock className={`w-4 h-4 ${dark ? 'text-sky-400' : 'text-blue-600'}`} aria-hidden="true" />
                       Histórico de Movimentações e Documentos
                     </h3>
 
                     <ol className={`relative pl-7 flex flex-col gap-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 ${
-                      dark ? 'before:bg-slate-700/60' : 'before:bg-slate-200'
+                      dark ? 'before:bg-slate-700' : 'before:bg-slate-300'
                     }`}>
                       {selected.historico.map((h: any) => (
                         <li key={h.id} className="relative">
                           <div className={`absolute -left-7 top-0.5 w-5 h-5 rounded-full flex items-center justify-center ring-4 ${
-                            dark ? 'ring-[#1e293b]' : 'ring-white'
-                          } ${corEtapa(h.status)}`}>
+                            dark ? 'ring-[#141c33]' : 'ring-white'
+                          } ${corEtapa(h.status, dark)}`}>
                             <div className="w-2 h-2 rounded-full bg-white" />
                           </div>
 
                           <div className={`p-3.5 rounded-xl border ${
                             dark
-                              ? 'bg-slate-800/60 border-slate-700/50 hover:bg-slate-800'
-                              : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                              ? 'bg-slate-900/80 border-slate-700 hover:bg-slate-900'
+                              : 'bg-slate-50 border-slate-300 hover:bg-slate-100'
                           }`}>
                             <div className="flex items-start justify-between gap-2">
-                              <span className="text-xs font-bold text-blue-400">
-                                {h.data} - <span className="uppercase tracking-wide">{h.status}</span>
+                              <span className={`text-xs font-black ${dark ? 'text-sky-400' : 'text-blue-700'}`}>
+                                {h.data} - <span className={`uppercase tracking-wide ${dark ? 'text-white' : 'text-slate-900'}`}>{h.status}</span>
                               </span>
 
                               <div className="flex items-center gap-1 shrink-0">
@@ -1567,8 +1627,8 @@ export default function App() {
                                   onClick={() => openEditOcorrencia(h)}
                                   aria-label={`Editar movimentação de ${h.data}`}
                                   title="Editar"
-                                  className={`p-1 rounded-md text-slate-400 hover:text-blue-400 ${
-                                    dark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                                  className={`p-1 rounded-md ${
+                                    dark ? 'text-slate-400 hover:text-sky-400 hover:bg-slate-800' : 'text-slate-500 hover:text-blue-700 hover:bg-slate-200'
                                   }`}
                                 >
                                   <Pencil className="w-3.5 h-3.5" />
@@ -1578,8 +1638,8 @@ export default function App() {
                                   onClick={() => removeOcorrencia(h)}
                                   aria-label={`Excluir movimentação de ${h.data}`}
                                   title="Excluir"
-                                  className={`p-1 rounded-md text-slate-400 hover:text-rose-500 ${
-                                    dark ? 'hover:bg-slate-700' : 'hover:bg-slate-200'
+                                  className={`p-1 rounded-md ${
+                                    dark ? 'text-slate-400 hover:text-rose-400 hover:bg-slate-800' : 'text-slate-500 hover:text-rose-700 hover:bg-slate-200'
                                   }`}
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -1587,14 +1647,18 @@ export default function App() {
                               </div>
                             </div>
 
-                            <p className={`text-xs mt-1.5 ${
-                              dark ? 'text-slate-300' : 'text-slate-600'
+                            <p className={`text-xs mt-1.5 font-semibold ${
+                              dark ? 'text-slate-200' : 'text-slate-700'
                             }`}>
                               {h.descricao}
                             </p>
 
                             {h.documentoAnexo && (
-                              <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] font-medium">
+                              <div className={`mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded border text-[11px] font-bold ${
+                                dark 
+                                  ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' 
+                                  : 'bg-blue-50 border-blue-300 text-blue-800'
+                              }`}>
                                 <Paperclip className="w-3 h-3" aria-hidden="true" />
                                 Documento Anexo: {h.documentoAnexo}
                               </div>
@@ -1606,7 +1670,7 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-64 text-slate-400 text-xs text-center">
+                <div className="flex items-center justify-center h-64 text-slate-400 text-xs font-bold text-center">
                   Nenhum processo cadastrado. Clique em "Novo Processo" para começar.
                 </div>
               )}
@@ -1622,10 +1686,10 @@ export default function App() {
         dark={dark}
         size="max-w-md"
         title="Imprimir Relatório"
-        icon={<Printer className="w-4 h-4 text-blue-500" />}
+        icon={<Printer className={`w-4 h-4 ${dark ? 'text-sky-400' : 'text-blue-600'}`} />}
       >
         <div className="flex flex-col gap-4 text-xs">
-          <p className={muted}>
+          <p className={`font-semibold ${muted}`}>
             Selecione qual filtro deseja aplicar ao relatório impresso:
           </p>
 
@@ -1650,10 +1714,10 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsPrintModalOpen(false)}
-              className={`px-4 py-2 rounded-lg border font-medium ${
+              className={`px-4 py-2 rounded-lg border font-bold ${
                 dark
-                  ? 'border-slate-600 hover:bg-slate-700'
-                  : 'border-slate-300 hover:bg-slate-100'
+                  ? 'border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                  : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
               }`}
             >
               Cancelar
@@ -1662,7 +1726,7 @@ export default function App() {
             <button
               type="button"
               onClick={handlePrint}
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm inline-flex items-center gap-1.5"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-600/30 inline-flex items-center gap-1.5"
             >
               <Printer className="w-3.5 h-3.5" />
               Gerar e Imprimir
@@ -1679,8 +1743,8 @@ export default function App() {
         title={editingId ? 'Editar Processo' : 'Abrir Novo Processo'}
         icon={
           editingId
-            ? <Pencil className="w-4 h-4 text-blue-500" />
-            : <Plus className="w-4 h-4 text-blue-500" />
+            ? <Pencil className={`w-4 h-4 ${dark ? 'text-sky-400' : 'text-blue-600'}`} />
+            : <Plus className={`w-4 h-4 ${dark ? 'text-sky-400' : 'text-blue-600'}`} />
         }
       >
         <form onSubmit={createProcesso} className="flex flex-col gap-3 text-xs">
@@ -1832,8 +1896,12 @@ export default function App() {
             </Field>
           </div>
 
-          <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <p className="text-[11px] text-blue-400 font-semibold mb-2">
+          <div className={`p-3 rounded-lg border ${
+            dark 
+              ? 'bg-blue-950/40 border-blue-500/40' 
+              : 'bg-blue-50 border-blue-200'
+          }`}>
+            <p className={`text-[11px] font-bold mb-2 ${dark ? 'text-sky-300' : 'text-blue-900'}`}>
               Valores (Opcionais no momento da abertura)
             </p>
 
@@ -1868,10 +1936,10 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsNewOpen(false)}
-              className={`px-4 py-2 rounded-lg border font-medium ${
+              className={`px-4 py-2 rounded-lg border font-bold ${
                 dark
-                  ? 'border-slate-600 hover:bg-slate-700'
-                  : 'border-slate-300 hover:bg-slate-100'
+                  ? 'border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                  : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
               }`}
             >
               Cancelar
@@ -1879,7 +1947,7 @@ export default function App() {
 
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-600/30"
             >
               {editingId ? 'Salvar Alterações' : 'Salvar Processo'}
             </button>
@@ -1896,8 +1964,8 @@ export default function App() {
         title={editingHistId ? 'Editar Movimentação' : 'Adicionar Nova Ocorrência'}
         icon={
           editingHistId
-            ? <Pencil className="w-4 h-4 text-emerald-500" />
-            : <Plus className="w-4 h-4 text-emerald-500" />
+            ? <Pencil className={`w-4 h-4 ${dark ? 'text-emerald-400' : 'text-emerald-600'}`} />
+            : <Plus className={`w-4 h-4 ${dark ? 'text-emerald-400' : 'text-emerald-600'}`} />
         }
       >
         <form onSubmit={addOcorrencia} className="flex flex-col gap-3 text-xs">
@@ -1951,10 +2019,10 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsHistOpen(false)}
-              className={`px-4 py-2 rounded-lg border font-medium ${
+              className={`px-4 py-2 rounded-lg border font-bold ${
                 dark
-                  ? 'border-slate-600 hover:bg-slate-700'
-                  : 'border-slate-300 hover:bg-slate-100'
+                  ? 'border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                  : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
               }`}
             >
               Cancelar
@@ -1962,7 +2030,7 @@ export default function App() {
 
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm"
+              className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/30"
             >
               {editingHistId ? 'Salvar Alterações' : 'Registrar Ocorrência'}
             </button>
@@ -1977,12 +2045,12 @@ export default function App() {
         dark={dark}
         size="max-w-md"
         title="Registrar Empenho"
-        icon={<FileCheck className="w-4 h-4 text-blue-500" />}
+        icon={<FileCheck className={`w-4 h-4 ${dark ? 'text-sky-400' : 'text-blue-600'}`} />}
       >
         <form onSubmit={registrarEmpenho} className="flex flex-col gap-3 text-xs">
-          <p className={`text-[11px] ${muted}`}>
+          <p className={`text-[11px] ${muted} font-bold`}>
             Processo{' '}
-            <span className="font-mono text-blue-400">
+            <span className={`font-mono font-bold ${dark ? 'text-blue-400' : 'text-blue-700'}`}>
               {selected?.processo}
             </span>
           </p>
@@ -2034,10 +2102,10 @@ export default function App() {
             <button
               type="button"
               onClick={() => setIsEmpOpen(false)}
-              className={`px-4 py-2 rounded-lg border font-medium ${
+              className={`px-4 py-2 rounded-lg border font-bold ${
                 dark
-                  ? 'border-slate-600 hover:bg-slate-700'
-                  : 'border-slate-300 hover:bg-slate-100'
+                  ? 'border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200'
+                  : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
               }`}
             >
               Cancelar
@@ -2045,7 +2113,7 @@ export default function App() {
 
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-sm"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-600/30"
             >
               Registrar Empenho
             </button>
