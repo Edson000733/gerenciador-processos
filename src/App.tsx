@@ -651,7 +651,8 @@ export default function App() {
           p.tipo || ''
         ].some((f) => f.toLowerCase().includes(t)) &&
         (filterClass === 'TODOS' ||
-          p.classificacao === filterClass) &&
+          p.classificacao === filterClass ||
+          String(p.fonte || '').toUpperCase() === filterClass) &&
         STATUS_FILTROS[statusFilter].test(p)
     );
   }, [processosAno, searchTerm, filterClass, statusFilter]);
@@ -1184,10 +1185,10 @@ export default function App() {
                   />
                 </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrar por classificação">
+                <div className="flex items-center gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrar por classificação e fonte">
                   <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
 
-                  {['TODOS', 'CUSTEIO', 'INVESTIMENTO'].map((c) => (
+                  {['TODOS', 'CUSTEIO', 'INVESTIMENTO', 'PROAP', 'PARTICIPATIVO'].map((c) => (
                     <button
                       key={c}
                       onClick={() => setFilterClass(c)}
@@ -1200,7 +1201,7 @@ export default function App() {
                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300'
                       }`}
                     >
-                      {c}
+                      {c === 'PARTICIPATIVO' ? 'Participativo' : c}
                     </button>
                   ))}
                 </div>
